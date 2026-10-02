@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-paper text-ink font-sans antialiased;
+}
+
+h1, h2, h3 {
+  @apply font-serif;
+}
+
+.amount {
+  @apply font-mono tabular-nums;
+}

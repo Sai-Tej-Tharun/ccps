@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-ccps_db}
+      MYSQL_USER: ${DB_USER:-ccps_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-ccps_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-ccps_root_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-ccps_root_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  django_backend:
+    build: ./django_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: mysql
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      # By the time this succeeds, `migrate && create_demo_admin` (see
+      # django_backend/Dockerfile's CMD) has already finished, since
+      # runserver only starts after those complete — this is what lets
+      # fastapi_backend below safely wait on "healthy" rather than merely
+      # "started" before it tries to read/write the same MySQL tables.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/admin/login/', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  fastapi_backend:
+    build: ./fastapi_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: mysql
+    ports:
+      - "8001:8001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      django_backend:
+        condition: service_healthy  # ensures Django's migrations have already run — see its healthcheck above
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - django_backend
+      - fastapi_backend
+
+volumes:
+  mysql_data:
