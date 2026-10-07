@@ -17,6 +17,7 @@ class Card(models.Model):
     cardholder_name = models.CharField(max_length=150)
     expiry_month = models.PositiveSmallIntegerField()
     expiry_year = models.PositiveSmallIntegerField()
+    credit_limit = models.DecimalField(max_digits=12, decimal_places=2, default=5000)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

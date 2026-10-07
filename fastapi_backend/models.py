@@ -34,6 +34,8 @@ class Card(Base):
     cardholder_name = Column(String(150))
     expiry_month = Column(SmallInteger)
     expiry_year = Column(SmallInteger)
+        # Added by django_backend/cards/migrations/0002_card_credit_limit.py 
+    credit_limit = Column(Numeric(12, 2), nullable=False, default=5000)   
     created_at = Column(DateTime)
 
 

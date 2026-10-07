@@ -1,0 +1,96 @@
+{
+  "info": {
+    "name": "Dashboard Summary Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "django_base_url", "value": "http://localhost:8000/api" },
+    { "key": "fastapi_base_url", "value": "http://localhost:8001" },
+    { "key": "email", "value": "jane@example.com" },
+    { "key": "password", "value": "StrongPass123!" },
+    { "key": "access_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Login (get JWT)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.test('Login returns an access token', function () { pm.expect(data.access).to.be.a('string'); });",
+              "if (data.access) { pm.collectionVariables.set('access_token', data.access); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{django_base_url}}/auth/login/",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "email", "value": "{{email}}" },
+            { "key": "password", "value": "{{password}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. GET /dashboard/summary (valid JWT)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has all summary fields', function () {",
+              "  ['total_transactions', 'total_amount_spent', 'current_month_spending', 'available_credit_limit', 'last_5_transactions'].forEach(function (k) { pm.expect(data).to.have.property(k); });",
+              "});",
+              "pm.test('At most 5 recent transactions', function () { pm.expect(data.last_5_transactions.length).to.be.at.most(5); });",
+              "pm.test('Each transaction has amount, masked card, date, status', function () {",
+              "  data.last_5_transactions.forEach(function (t) {",
+              "    ['amount', 'masked_card_number', 'date', 'status'].forEach(function (k) { pm.expect(t).to.have.property(k); });",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{fastapi_base_url}}/dashboard/summary",
+        "auth": {
+          "type": "bearer",
+          "bearer": [ { "key": "token", "value": "{{access_token}}", "type": "string" } ]
+        }
+      }
+    },
+    {
+      "name": "3. GET /dashboard/summary (no JWT -> 401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Rejected without a token (401)', function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "header": [],
+        "url": "{{fastapi_base_url}}/dashboard/summary"
+      }
+    }
+  ]
+}

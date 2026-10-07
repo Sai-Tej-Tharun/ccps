@@ -28,3 +28,20 @@ class PaymentOut(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+class DashboardTransaction(BaseModel):
+    amount: Decimal
+    currency: str
+    masked_card_number: Optional[str] = None
+    date: datetime
+    status: str
+
+
+class DashboardSummary(BaseModel):
+    total_transactions: int
+    total_amount_spent: Decimal
+    current_month_spending: Decimal
+    available_credit_limit: Decimal
+    last_5_transactions: list[DashboardTransaction]

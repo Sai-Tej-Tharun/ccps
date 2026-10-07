@@ -1,0 +1,9 @@
+cd ccps
+cp .env.example .env
+docker compose up --build
+
+
+What	URL
+App	http://localhost:5173
+Django Swagger	http://localhost:8000/api/docs/
+FastAPI Swagger	http://localhost:8001/docs

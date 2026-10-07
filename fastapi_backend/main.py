@@ -13,6 +13,7 @@ Swagger UI: /docs   ReDoc: /redoc
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from dashboard import router as dashboard_router
 from payments import router as payments_router
 
 app = FastAPI(
@@ -30,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(payments_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/health", tags=["Health"])
