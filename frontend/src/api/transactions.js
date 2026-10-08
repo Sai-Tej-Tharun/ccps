@@ -23,3 +23,19 @@ export const downloadTransactionsCsv = async (filters = {}) => {
   link.remove();
   window.URL.revokeObjectURL(url);
 };
+// Same approach as the CSV export: fetch through the authenticated client as a
+// blob (a plain link would not carry the JWT), then trigger the download.
+export const downloadMonthlyStatement = async ({ year, month }) => {
+  const response = await djangoClient.get("/transactions/statement/", {
+    params: { year, month },
+    responseType: "blob",
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `statement_${year}_${String(month).padStart(2, "0")}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};

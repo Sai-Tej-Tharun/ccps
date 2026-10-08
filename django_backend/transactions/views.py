@@ -1,15 +1,18 @@
 import csv
 
+from django.conf import settings
 from django.http import HttpResponse
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from adminpanel.models import AdminActionLog
 
 from .filters import TransactionFilter
 from .models import Transaction
-from .serializers import TransactionSerializer
+from .serializers import StatementQuerySerializer, TransactionSerializer
+from .statement import get_statement_data, render_statement_pdf
 
 
 class TransactionListView(ListAPIView):
@@ -72,4 +75,30 @@ class TransactionExportCSVView(APIView):
                     txn.created_at.isoformat(),
                 ]
             )
+        return response
+class StatementRateThrottle(UserRateThrottle):
+    scope = "statement"  # rate set in settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+
+
+class MonthlyStatementView(APIView):
+    """
+    GET /api/transactions/statement/?year=2026&month=9  - downloadable PDF statement.
+
+    Always the *requesting user's own* data (the user is never taken from the
+    request), so one customer can never download another's statement.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [] if settings.TESTING else [StatementRateThrottle]
+
+    def get(self, request):
+        query = StatementQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        year, month = query.validated_data["year"], query.validated_data["month"]
+
+        pdf = render_statement_pdf(get_statement_data(request.user, year, month))
+
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="statement_{year}_{month:02d}.pdf"'
+        response["Cache-Control"] = "no-store"  # financial data - don't let proxies/browsers cache it
         return response

@@ -13,3 +13,78 @@ h1, h2, h3 {
 .amount {
   @apply font-mono tabular-nums;
 }
+/* ==========================================================================
+   Theme support (light / dark)
+   Colours below are space-separated RGB channels so Tailwind's opacity
+   modifiers keep working (e.g. text-ink/60, border-ink/10, bg-paper/95).
+   ========================================================================== */
+:root {
+  --color-ink: 21 35 31;
+  --color-paper: 246 245 241;
+  --color-surface: 255 255 255;
+  --ledger-50: 234 242 239;
+  --ledger-100: 211 229 222;
+  --ledger-300: 121 175 160;
+  --focus-ring: 31 111 92;
+  color-scheme: light;
+}
+
+:root.dark {
+  --color-ink: 231 237 234;
+  --color-paper: 14 21 18;
+  --color-surface: 22 33 29;
+  --ledger-50: 25 50 43;
+  --ledger-100: 32 66 56;
+  --ledger-300: 52 112 96;
+  --focus-ring: 124 203 182;
+  color-scheme: dark; /* native form controls, scrollbars and date pickers follow the theme */
+}
+
+/* Surfaces and tints that are hard-coded light colours in the existing pages */
+.dark .bg-white { background-color: rgb(var(--color-surface)); }
+.dark .bg-red-50 { background-color: rgb(63 25 24); }
+.dark .bg-amber-50 { background-color: rgb(58 45 14); }
+.dark .border-red-200 { border-color: rgb(125 52 48); }
+.dark .border-amber-200 { border-color: rgb(112 84 22); }
+
+/* Text colours that would be too dark on a dark surface */
+.dark .text-danger { color: #F2B8B5; }
+.dark .text-warn { color: #E8C066; }
+.dark .text-ledger-500,
+.dark .text-ledger-600,
+.dark .text-ledger-700,
+.dark .hover\:text-ledger-600:hover { color: #7CCBB6; }
+.dark .hover\:text-white:hover { color: #fff; } /* keep white text on filled hover buttons */
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-ink));
+}
+
+/* Visible keyboard focus in both themes */
+a:focus-visible,
+button:focus-visible,
+[role="switch"]:focus-visible {
+  outline: 2px solid rgb(var(--focus-ring));
+  outline-offset: 2px;
+}
+
+/* Smooth switching: enabled only briefly while the theme changes, so normal
+   hover effects are not slowed down. Skipped for reduced-motion users. */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *::before,
+  .theme-transition *::after {
+    transition: none !important;
+  }
+}

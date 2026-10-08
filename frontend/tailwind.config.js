@@ -1,15 +1,17 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        ink: "#15231F",
-        paper: "#F6F5F1",
+        // These resolve to CSS variables (defined in src/index.css) so they switch with the theme.
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
+        paper: "rgb(var(--color-paper) / <alpha-value>)",
         ledger: {
-          50: "#EAF2EF",
-          100: "#D3E5DE",
-          300: "#79AFA0",
+          50: "rgb(var(--ledger-50) / <alpha-value>)",
+          100: "rgb(var(--ledger-100) / <alpha-value>)",
+          300: "rgb(var(--ledger-300) / <alpha-value>)",
           500: "#1F6F5C",
           600: "#195C4C",
           700: "#14493C",

@@ -18,6 +18,8 @@ class Card(models.Model):
     expiry_month = models.PositiveSmallIntegerField()
     expiry_year = models.PositiveSmallIntegerField()
     credit_limit = models.DecimalField(max_digits=12, decimal_places=2, default=5000)
+    is_blocked = models.BooleanField(default=False, db_index=True)
+    blocked_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

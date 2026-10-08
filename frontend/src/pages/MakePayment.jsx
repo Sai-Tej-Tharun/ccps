@@ -19,7 +19,7 @@ export default function MakePayment() {
     listCards()
       .then((c) => {
         setCards(c);
-        if (c.length) setSelectedCard(c[0]);
+        setSelectedCard(c.find((card) => !card.is_blocked) ?? null); // never pre-select a blocked card
       })
       .finally(() => setLoading(false));
   }, []);

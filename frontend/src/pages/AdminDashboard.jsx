@@ -28,7 +28,10 @@ export default function AdminDashboard() {
     <div className="mx-auto max-w-5xl px-6 py-10">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-ink">Admin Dashboard</h1>
-        <Link to="/transactions" className="text-sm font-medium text-ledger-600 hover:underline">View all transactions →</Link>
+        <div className="flex gap-4">
+          <Link to="/admin/cards" className="text-sm font-medium text-ledger-600 hover:underline">Manage cards →</Link>
+          <Link to="/transactions" className="text-sm font-medium text-ledger-600 hover:underline">View all transactions →</Link>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-4">

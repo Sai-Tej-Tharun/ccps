@@ -139,6 +139,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "20/minute",
         "user": "120/minute",
+        "statement": "10/minute",
     },
 }
 
@@ -171,3 +172,22 @@ SPECTACULAR_SETTINGS = {
 DEMO_ADMIN_USERNAME = os.environ.get("DEMO_ADMIN_USERNAME", "admin")
 DEMO_ADMIN_EMAIL = os.environ.get("DEMO_ADMIN_EMAIL", "admin@example.com")
 DEMO_ADMIN_PASSWORD = os.environ.get("DEMO_ADMIN_PASSWORD", "StrongPass123!")
+
+
+# --- E-mail notifications ----------------------------------------------------
+# With EMAIL_HOST unset, e-mails are printed to the console (safe for local
+# development). Set EMAIL_HOST (+ credentials) in .env to send real e-mail.
+# fastapi_backend/notifications.py reads these same variables.
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+    if EMAIL_HOST
+    else "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"  # use for port 465; leave TLS off then
+EMAIL_TIMEOUT = 10  # seconds - a slow mail server must not hang a request
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "LedgerPay Alerts <no-reply@ledgerpay.local>")

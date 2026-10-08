@@ -13,12 +13,13 @@ because the frontend sent it.
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
 from database import get_db
 from models import Card, Transaction, User
+from notifications import build_payment_alerts, send_email
 from schemas import PaymentCreate, PaymentOut
 from simulation import simulate_payment
 
@@ -53,12 +54,17 @@ def _serialize(txn: Transaction) -> PaymentOut:
 @router.post("/pay", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
 def make_payment(
     payload: PaymentCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     card = db.query(Card).filter(Card.id == payload.card_id, Card.user_id == current_user.id).first()
     if not card:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card not found.")
+
+    # A blocked card must never be able to pay (enforced here, not just in the UI).
+    if card.is_blocked:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This card is blocked. Please contact support.")
 
     now = _utcnow()
     txn = Transaction(
@@ -83,6 +89,11 @@ def make_payment(
     txn.updated_at = _utcnow()
     db.commit()
     db.refresh(txn)
+
+    # E-mail alerts (large transaction / low credit). The messages are built here
+    # while the DB session is open; only the SMTP send runs after the response.
+    for alert in build_payment_alerts(db, current_user, card, txn):
+        background_tasks.add_task(send_email, alert)
 
     return _serialize(txn)
 

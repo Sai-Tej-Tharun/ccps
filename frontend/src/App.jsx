@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AddCard from "./pages/AddCard";
+import AdminCards from "./pages/AdminCards";
 import AdminDashboard from "./pages/AdminDashboard";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/payments/new" element={<ProtectedRoute><MakePayment /></ProtectedRoute>} />
           <Route path="/transactions" element={<ProtectedRoute><TransactionHistory /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/cards" element={<ProtectedRoute adminOnly><AdminCards /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

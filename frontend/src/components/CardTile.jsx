@@ -9,15 +9,20 @@ const BRAND_LABEL = {
 export default function CardTile({ card, onDelete, selectable, selected, onSelect }) {
   return (
     <div
-      onClick={() => selectable && onSelect?.(card)}
+      onClick={() => selectable && !card.is_blocked && onSelect?.(card)}
       className={`rounded-xl border p-5 transition ${
-        selectable ? "cursor-pointer hover:border-ledger-400" : ""
+        selectable && !card.is_blocked ? "cursor-pointer hover:border-ledger-400" : ""
       } ${selected ? "border-ledger-500 ring-2 ring-ledger-200" : "border-ink/10"} bg-white`}
     >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-wide text-ink/50">{BRAND_LABEL[card.brand] || card.brand}</p>
           <p className="amount mt-1 text-lg text-ink">{card.masked_number}</p>
+          {card.is_blocked && (
+            <span className="mt-2 inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-danger">
+              Blocked
+            </span>
+          )}
         </div>
         {onDelete && (
           <button

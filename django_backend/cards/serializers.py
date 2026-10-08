@@ -11,7 +11,7 @@ class CardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Card
-        fields = ["id", "brand", "masked_number", "last4", "cardholder_name", "expiry_month", "expiry_year", "created_at"]
+        fields = ["id", "brand", "masked_number", "last4", "cardholder_name", "expiry_month", "expiry_year", "is_blocked", "created_at"]
         read_only_fields = fields
 
 

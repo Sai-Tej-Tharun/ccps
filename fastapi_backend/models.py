@@ -8,7 +8,7 @@ User/Card rows; it never touches auth_user or cards_card's schema.
 
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, SmallInteger, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, SmallInteger, String
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -20,6 +20,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(150))
     email = Column(String(254))
+    first_name = Column(String(150))
     is_active = Column(Integer)
 
 
@@ -36,6 +37,9 @@ class Card(Base):
     expiry_year = Column(SmallInteger)
         # Added by django_backend/cards/migrations/0002_card_credit_limit.py 
     credit_limit = Column(Numeric(12, 2), nullable=False, default=5000)   
+    # Added by django_backend/cards/migrations/0003_card_blocking.py
+    is_blocked = Column(Boolean, nullable=False, default=False)
+    blocked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime)
 
 
