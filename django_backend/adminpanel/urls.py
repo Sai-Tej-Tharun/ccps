@@ -7,6 +7,9 @@ from .card_views import (
     AdminCardListView,
     AdminCardUnblockView,
 )
+from .fraud_views import FraudLogListView, FraudLogReviewView
+from .health_views import SystemHealthView
+from .rbac_views import RoleMatrixView, StaffUserListView, UserRoleView
 from .views import AdminActionLogListView, DailySummaryView
 
 urlpatterns = [
@@ -17,4 +20,10 @@ urlpatterns = [
     path("cards/<int:pk>/unblock/", AdminCardUnblockView.as_view(), name="admin-card-unblock"),
     path("cards/<int:pk>/credit-limit/", AdminCardCreditLimitView.as_view(), name="admin-card-credit-limit"),
     path("cards/<int:pk>/activity/", AdminCardActivityView.as_view(), name="admin-card-activity"),
+    path("roles/", RoleMatrixView.as_view(), name="admin-roles"),
+    path("staff-users/", StaffUserListView.as_view(), name="admin-staff-users"),
+    path("users/<int:pk>/role/", UserRoleView.as_view(), name="admin-user-role"),
+    path("fraud-logs/", FraudLogListView.as_view(), name="admin-fraud-logs"),
+    path("fraud-logs/<int:pk>/review/", FraudLogReviewView.as_view(), name="admin-fraud-review"),
+    path("system-health/", SystemHealthView.as_view(), name="admin-system-health"),
 ]

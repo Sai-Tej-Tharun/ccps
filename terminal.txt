@@ -1,4 +1,7 @@
 cd django_backend
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv\Scripts\Activate.ps1
+
 python manage.py migrate
 python manage.py test
 cd ..
@@ -8,11 +11,18 @@ python -m pytest
 cd ..
 
 cd frontend
+npm install
 npm run build
 cd ..
 
 docker-compose up --build
 
+
+cd C:\Users\tejth\Desktop\ccps
+git status
+git add .
+git commit -m "Update project"
+git push origin main
 
 What	URL
 App	http://localhost:5173

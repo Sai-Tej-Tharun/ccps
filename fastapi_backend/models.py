@@ -8,7 +8,7 @@ User/Card rows; it never touches auth_user or cards_card's schema.
 
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, SmallInteger, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, SmallInteger, String, Text
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -54,6 +54,11 @@ class Transaction(Base):
     status = Column(String(10), default="PENDING", nullable=False)
     reference = Column(String(36), unique=True, nullable=False, default=lambda: uuid.uuid4().hex)
     failure_reason = Column(String(255), default="")
+    # Added by django_backend/transactions/migrations/0002_*.py (column defaults are applied here, not by MySQL)
+    category = Column(String(20), nullable=False, default="OTHER")
+    fraud_status = Column(String(10), nullable=False, default="CLEAN")
+    ip_address = Column(String(45), nullable=True)
+    device_hash = Column(String(64), nullable=False, default="")
     # NOT DB-defaulted: Django's `auto_now_add=True` / `auto_now=True` are
     # Python-side-only behaviors (Django sets the value at ORM save time,
     # not via a SQL DEFAULT on the column — confirmed against the actual
@@ -64,3 +69,38 @@ class Transaction(Base):
     updated_at = Column(DateTime, nullable=False)
 
     card = relationship("Card")
+class FraudLog(Base):
+    """Mirror of adminpanel_fraudlog (created by Django's adminpanel migration)."""
+
+    __tablename__ = "adminpanel_fraudlog"
+
+    id = Column(Integer, primary_key=True)
+    transaction_id = Column(Integer, ForeignKey("transactions_transaction.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("auth_user.id"), nullable=False)
+    card_id = Column(Integer, ForeignKey("cards_card.id"), nullable=True)
+    rule = Column(String(30), nullable=False)
+    severity = Column(String(10), nullable=False, default="MEDIUM")
+    details = Column(Text, nullable=False, default="")
+    ip_address = Column(String(45), nullable=True)
+    device_hash = Column(String(64), nullable=False, default="")
+    created_at = Column(DateTime, nullable=False)
+    reviewed = Column(Boolean, nullable=False, default=False)
+    reviewed_by_id = Column(Integer, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    resolution = Column(String(20), nullable=False, default="")
+    review_note = Column(String(500), nullable=False, default="")
+
+
+class RequestLog(Base):
+    """Mirror of adminpanel_requestlog (API response-time / error log)."""
+
+    __tablename__ = "adminpanel_requestlog"
+
+    id = Column(Integer, primary_key=True)
+    service = Column(String(10), nullable=False)
+    method = Column(String(8), nullable=False)
+    path = Column(String(200), nullable=False)
+    status_code = Column(SmallInteger, nullable=False)
+    duration_ms = Column(Integer, nullable=False)
+    error = Column(String(255), nullable=False, default="")
+    created_at = Column(DateTime, nullable=False)

@@ -39,3 +39,7 @@ export const downloadMonthlyStatement = async ({ year, month }) => {
   link.remove();
   window.URL.revokeObjectURL(url);
 };
+// Paged search. params: status, category, fraud_status, card, date_from, date_to,
+// min_amount, max_amount, ordering, page, page_size. Returns { count, next, previous, results }.
+export const searchTransactions = (params = {}) =>
+  djangoClient.get("/transactions/", { params }).then((r) => r.data);

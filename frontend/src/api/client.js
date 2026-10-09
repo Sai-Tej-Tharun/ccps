@@ -60,6 +60,28 @@ function createClient(baseURL) {
 export const djangoClient = createClient(DJANGO_BASE_URL);
 export const fastapiClient = createClient(FASTAPI_BASE_URL);
 
+// A random id kept in this browser. The payment service hashes it and uses it for the
+// "payments from different devices" fraud rule. (Sent to FastAPI only: Django's CORS
+// settings do not whitelist this header.)
+const DEVICE_KEY = "ccps_device_id";
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+      id = window.crypto?.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  } catch {
+    return ""; // storage blocked: the server falls back to the User-Agent
+  }
+}
+fastapiClient.interceptors.request.use((config) => {
+  const id = getDeviceId();
+  if (id) config.headers["X-Device-Id"] = id;
+  return config;
+});
+
 // A single place to turn any backend error payload into one readable
 // string, since Django (DRF) and FastAPI shape validation errors
 // differently.

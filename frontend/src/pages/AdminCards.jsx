@@ -9,6 +9,7 @@ import {
 } from "../api/admin";
 import { extractErrorMessage } from "../api/client";
 import StatusBadge from "../components/StatusBadge";
+import { useAuth } from "../context/AuthContext";
 
 const PAGE_SIZE = 20; // matches REST_FRAMEWORK["PAGE_SIZE"] in Django settings
 const MAX_LIMIT = 10000000;
@@ -256,6 +257,7 @@ function ActivityModal({ card, onClose }) {
 }
 
 export default function AdminCards() {
+  const { can } = useAuth(); // buttons the role may not use are hidden; the server enforces it anyway
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -412,18 +414,22 @@ export default function AdminCards() {
                   <td className="px-4 py-3"><CardStatus blocked={card.is_blocked} /></td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleBlock(card)}
-                        disabled={busyId === card.id}
-                        aria-label={`${card.is_blocked ? "Unblock" : "Block"} card ending ${card.last4}`}
-                        className={card.is_blocked ? actionBtn : dangerBtn}
-                      >
-                        {busyId === card.id ? "Working..." : card.is_blocked ? "Unblock" : "Block"}
-                      </button>
-                      <button type="button" onClick={() => setLimitCard(card)} aria-label={`Edit credit limit for card ending ${card.last4}`} className={actionBtn}>
-                        Edit limit
-                      </button>
+                      {can("cards.block") && (
+                        <button
+                          type="button"
+                          onClick={() => toggleBlock(card)}
+                          disabled={busyId === card.id}
+                          aria-label={`${card.is_blocked ? "Unblock" : "Block"} card ending ${card.last4}`}
+                          className={card.is_blocked ? actionBtn : dangerBtn}
+                        >
+                          {busyId === card.id ? "Working..." : card.is_blocked ? "Unblock" : "Block"}
+                        </button>
+                      )}
+                      {can("cards.update_limit") && (
+                        <button type="button" onClick={() => setLimitCard(card)} aria-label={`Edit credit limit for card ending ${card.last4}`} className={actionBtn}>
+                          Edit limit
+                        </button>
+                      )}
                       <button type="button" onClick={() => setActivityCard(card)} aria-label={`View activity for card ending ${card.last4}`} className={actionBtn}>
                         Activity
                       </button>

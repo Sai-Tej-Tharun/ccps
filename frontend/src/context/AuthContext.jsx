@@ -37,6 +37,9 @@ export function AuthProvider({ children }) {
     user,
     isAuthenticated: Boolean(user),
     isAdmin: Boolean(user?.is_staff),
+    role: user?.role ?? null, // "ADMIN" | "SUPPORT" | "READ_ONLY" | null (customer)
+    // UI convenience only: the server re-checks every permission on every request.
+    can: (permission) => Boolean(user?.permissions?.includes(permission)),
     loading,
     login,
     register,

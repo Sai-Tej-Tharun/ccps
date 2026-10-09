@@ -42,7 +42,11 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         self.fields.pop("username", None)  # clients send `email`, never `username`
 
     def validate(self, attrs):
-        attrs["username"] = self.initial_data.get("email", "")
+        email = self.initial_data.get("email", "")
+        # Accounts such as the seeded demo admin have a username that is not their e-mail
+        # (username "admin"): look the user up by e-mail and sign in with their real username.
+        match = User.objects.filter(email__iexact=email).values_list("username", flat=True).first()
+        attrs["username"] = match or email
         return super().validate(attrs)
 
     @classmethod

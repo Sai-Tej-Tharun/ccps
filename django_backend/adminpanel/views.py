@@ -4,10 +4,11 @@ from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.permissions import require
+from accounts.rbac import Perm
 from transactions.models import Transaction
 
 from .models import AdminActionLog
@@ -23,7 +24,7 @@ class DailySummaryView(APIView):
     data behind the admin dashboard's "Daily Payment Summary".
     """
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [require(Perm.ANALYTICS_VIEW)]
 
     def get(self, request):
         try:
@@ -68,6 +69,16 @@ class DailySummaryView(APIView):
 class AdminActionLogListView(ListAPIView):
     """GET /api/adminpanel/logs/  (admin-only) — audit trail of admin actions."""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [require(Perm.AUDIT_VIEW)]  # Admin only
     serializer_class = AdminActionLogSerializer
-    queryset = AdminActionLog.objects.select_related("admin_user").all()
+
+    def get_queryset(self):
+        qs = AdminActionLog.objects.select_related("admin_user")
+        params = self.request.query_params
+        if params.get("action"):
+            qs = qs.filter(action__icontains=params["action"][:100])
+        if params.get("target_type"):
+            qs = qs.filter(target_type=params["target_type"][:40])
+        if params.get("admin"):
+            qs = qs.filter(admin_user__email__icontains=params["admin"][:100])
+        return qs

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchDailySummary } from "../api/admin";
+import SystemHealthPanel from "../components/SystemHealthPanel";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminDashboard() {
+  const { can } = useAuth();
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +32,8 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-ink">Admin Dashboard</h1>
         <div className="flex gap-4">
+          {can("fraud.view") && <Link to="/admin/security" className="text-sm font-medium text-ledger-600 hover:underline">Security →</Link>}
+          <Link to="/analytics" className="text-sm font-medium text-ledger-600 hover:underline">Analytics →</Link>
           <Link to="/admin/cards" className="text-sm font-medium text-ledger-600 hover:underline">Manage cards →</Link>
           <Link to="/transactions" className="text-sm font-medium text-ledger-600 hover:underline">View all transactions →</Link>
         </div>
@@ -65,6 +70,8 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {can("monitoring.view") && <SystemHealthPanel />}
     </div>
   );
 }

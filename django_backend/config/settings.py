@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "adminpanel.monitoring.RequestMetricsMiddleware",  # first, so it times the whole request
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -191,3 +192,7 @@ EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"  # use for port 465; leave TLS off then
 EMAIL_TIMEOUT = 10  # seconds - a slow mail server must not hang a request
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "LedgerPay Alerts <no-reply@ledgerpay.local>")
+# --- Monitoring --------------------------------------------------------------
+REQUEST_METRICS_ENABLED = os.environ.get("REQUEST_METRICS_ENABLED", "True") == "True"
+# The payment service's health endpoint, checked by /api/adminpanel/system-health/.
+FASTAPI_HEALTH_URL = os.environ.get("FASTAPI_HEALTH_URL", "http://fastapi_backend:8001/health")

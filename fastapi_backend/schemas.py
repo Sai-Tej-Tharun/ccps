@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -9,6 +9,7 @@ class PaymentCreate(BaseModel):
     card_id: int
     amount: Decimal = Field(..., gt=0, le=1_000_000)
     currency: str = Field(default="USD", min_length=3, max_length=3)
+    category: Literal["SHOPPING", "FOOD", "TRAVEL", "BILLS", "ENTERTAINMENT", "HEALTH", "OTHER"] = "OTHER"
 
     @field_validator("currency")
     @classmethod

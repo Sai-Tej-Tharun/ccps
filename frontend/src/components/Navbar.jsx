@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
-  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const { isAuthenticated, can, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -24,12 +24,10 @@ export default function Navbar() {
             <Link to="/cards/add" className="hover:text-ledger-600">Add Card</Link>
             <Link to="/payments/new" className="hover:text-ledger-600">Make Payment</Link>
             <Link to="/transactions" className="hover:text-ledger-600">History</Link>
-            {isAdmin && (
-              <>
-                <Link to="/admin" className="hover:text-ledger-600">Admin</Link>
-                <Link to="/admin/cards" className="hover:text-ledger-600">Cards</Link>
-              </>
-            )}
+            <Link to="/analytics" className="hover:text-ledger-600">Analytics</Link>
+            {can("analytics.view") && <Link to="/admin" className="hover:text-ledger-600">Admin</Link>}
+            {can("cards.view") && <Link to="/admin/cards" className="hover:text-ledger-600">Cards</Link>}
+            {can("fraud.view") && <Link to="/admin/security" className="hover:text-ledger-600">Security</Link>}
           </div>
         )}
 
@@ -37,7 +35,10 @@ export default function Navbar() {
           <ThemeToggle />
           {isAuthenticated ? (
             <>
-              <span className="hidden text-sm text-ink/60 sm:inline">{user?.email}</span>
+              <span className="hidden text-sm text-ink/60 sm:inline">
+                {user?.email}
+                {user?.role && <span className="ml-2 rounded-full border border-ink/15 px-2 py-0.5 text-xs">{user.role.replace("_", "-").toLowerCase()}</span>}
+              </span>
               <button
                 onClick={handleLogout}
                 className="rounded-md border border-ledger-500 px-3 py-1.5 text-sm font-medium text-ledger-600 transition hover:bg-ledger-500 hover:text-white"

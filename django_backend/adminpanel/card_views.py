@@ -19,17 +19,18 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.permissions import require
+from accounts.rbac import Perm
 from cards.emails import send_card_blocked_email
 from cards.models import Card
 from transactions.models import Transaction
 from transactions.serializers import TransactionSerializer
 
 from .card_serializers import AdminCardSerializer, CreditLimitUpdateSerializer
-from .models import AdminActionLog
+from .audit import log_admin_action
 
 
 def annotated_cards():
@@ -52,7 +53,7 @@ def _serialize(card_id):
 
 
 class AdminCardListView(ListAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [require(Perm.CARDS_VIEW)]
     serializer_class = AdminCardSerializer
 
     def get_queryset(self):
@@ -80,7 +81,7 @@ class AdminCardListView(ListAPIView):
 class _BlockStateView(APIView):
     """Shared implementation of block / unblock."""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [require(Perm.CARDS_BLOCK)]  # Admin and Support
     block = True
 
     def post(self, request, pk):
@@ -95,9 +96,12 @@ class _BlockStateView(APIView):
             card.blocked_at = timezone.now() if self.block else None
             card.save(update_fields=["is_blocked", "blocked_at"])
 
-            AdminActionLog.objects.create(
-                admin_user=request.user,
-                action="Blocked card" if self.block else "Unblocked card",
+            log_admin_action(
+                request,
+                "Blocked card" if self.block else "Unblocked card",
+                target_type="card",
+                target_id=card.pk,
+                changes={"is_blocked": {"old": not self.block, "new": self.block}},
                 details=f"card_id={card.pk}, owner_id={card.user_id}, last4={card.last4}",
             )
             if self.block:
@@ -116,7 +120,7 @@ class AdminCardUnblockView(_BlockStateView):
 
 
 class AdminCardCreditLimitView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [require(Perm.CARDS_UPDATE_LIMIT)]  # Admin only
 
     def patch(self, request, pk):
         serializer = CreditLimitUpdateSerializer(data=request.data)
@@ -129,9 +133,12 @@ class AdminCardCreditLimitView(APIView):
             if old_limit != new_limit:
                 card.credit_limit = new_limit
                 card.save(update_fields=["credit_limit"])
-                AdminActionLog.objects.create(
-                    admin_user=request.user,
-                    action="Updated card credit limit",
+                log_admin_action(
+                    request,
+                    "Updated card credit limit",
+                    target_type="card",
+                    target_id=card.pk,
+                    changes={"credit_limit": {"old": str(old_limit), "new": str(new_limit)}},
                     details=f"card_id={card.pk}, owner_id={card.user_id}, last4={card.last4}, old={old_limit}, new={new_limit}",
                 )
 
@@ -139,7 +146,7 @@ class AdminCardCreditLimitView(APIView):
 
 
 class AdminCardActivityView(ListAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [require(Perm.CARDS_VIEW)]
     serializer_class = TransactionSerializer
 
     def get_queryset(self):

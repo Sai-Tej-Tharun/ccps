@@ -10,6 +10,7 @@ export default function MakePayment() {
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("OTHER");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -34,7 +35,7 @@ export default function MakePayment() {
     }
     setSubmitting(true);
     try {
-      const payment = await makePayment({ card_id: selectedCard.id, amount });
+      const payment = await makePayment({ card_id: selectedCard.id, amount, category });
       setResult(payment);
       setAmount("");
     } catch (err) {
@@ -90,6 +91,24 @@ export default function MakePayment() {
             placeholder="25.00"
           />
           <p className="mt-1 text-xs text-ink/40">Amounts over 5000.00 simulate a decline, for demo purposes.</p>
+        </div>
+
+        <div>
+          <label htmlFor="category" className="text-sm font-medium text-ink/80">Category</label>
+          <select
+            id="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="mt-1 w-full rounded-md border border-ink/15 px-3 py-2 outline-none focus:border-ledger-500"
+          >
+            <option value="SHOPPING">Shopping</option>
+            <option value="FOOD">Food &amp; dining</option>
+            <option value="TRAVEL">Travel</option>
+            <option value="BILLS">Bills &amp; utilities</option>
+            <option value="ENTERTAINMENT">Entertainment</option>
+            <option value="HEALTH">Health</option>
+            <option value="OTHER">Other</option>
+          </select>
         </div>
 
         {error && <p className="text-sm text-danger">{error}</p>}

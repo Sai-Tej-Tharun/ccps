@@ -2,14 +2,25 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from .rbac import get_role, permissions_for
+
 User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "is_staff", "date_joined"]
+        fields = ["id", "email", "first_name", "last_name", "is_staff", "date_joined", "role", "permissions"]
         read_only_fields = fields
+
+    def get_role(self, user):
+        return get_role(user)
+
+    def get_permissions(self, user):
+        return sorted(permissions_for(user))
 
 
 class RegisterSerializer(serializers.ModelSerializer):

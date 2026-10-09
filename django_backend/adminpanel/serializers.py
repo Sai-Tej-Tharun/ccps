@@ -8,5 +8,5 @@ class AdminActionLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdminActionLog
-        fields = ["id", "admin_email", "action", "details", "created_at"]
+        fields = ["id", "admin_email", "role", "action", "target_type", "target_id", "changes", "details", "ip_address", "created_at"]
         read_only_fields = fields

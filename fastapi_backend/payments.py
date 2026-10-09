@@ -11,13 +11,15 @@ service and must not trust that a card_id belongs to the caller just
 because the frontend sent it.
 """
 
+import hashlib
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
 from database import get_db
+from fraud import evaluate_and_record
 from models import Card, Transaction, User
 from notifications import build_payment_alerts, send_email
 from schemas import PaymentCreate, PaymentOut
@@ -35,6 +37,17 @@ def _utcnow() -> datetime:
     own rows in the same table look like.
     """
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _client_fingerprint(request: Request) -> tuple[str | None, str]:
+    """
+    (IP address, hashed device id) of the caller, used by the fraud rules. The device id is the
+    random X-Device-Id the frontend keeps in localStorage (falling back to the User-Agent);
+    only a hash of it is stored.
+    """
+    ip = request.client.host[:45] if request.client else None
+    raw = request.headers.get("x-device-id") or request.headers.get("user-agent") or ""
+    return ip, (hashlib.sha256(raw.encode()).hexdigest()[:32] if raw else "")
 
 
 def _serialize(txn: Transaction) -> PaymentOut:
@@ -55,6 +68,7 @@ def _serialize(txn: Transaction) -> PaymentOut:
 def make_payment(
     payload: PaymentCreate,
     background_tasks: BackgroundTasks,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -67,11 +81,15 @@ def make_payment(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This card is blocked. Please contact support.")
 
     now = _utcnow()
+    ip_address, device_hash = _client_fingerprint(request)
     txn = Transaction(
         user_id=current_user.id,
         card_id=card.id,
         amount=payload.amount,
         currency=payload.currency,
+        category=payload.category,
+        ip_address=ip_address,
+        device_hash=device_hash,
         status="PENDING",
         created_at=now,
         updated_at=now,
@@ -93,6 +111,10 @@ def make_payment(
     # E-mail alerts (large transaction / low credit). The messages are built here
     # while the DB session is open; only the SMTP send runs after the response.
     for alert in build_payment_alerts(db, current_user, card, txn):
+        background_tasks.add_task(send_email, alert)
+
+    # Fraud rules: flags the transaction, writes the fraud log, returns the alert e-mails.
+    for alert in evaluate_and_record(db, current_user, card, txn):
         background_tasks.add_task(send_email, alert)
 
     return _serialize(txn)

@@ -55,6 +55,7 @@ services:
       django_backend:
         condition: service_healthy  # ensures Django's migrations have already run — see its healthcheck above
 
+
   frontend:
     build: ./frontend
     restart: unless-stopped
@@ -63,6 +64,14 @@ services:
     depends_on:
       - django_backend
       - fastapi_backend
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ccps-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
 volumes:
   mysql_data:
